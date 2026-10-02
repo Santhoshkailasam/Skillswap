@@ -117,10 +117,23 @@ export const CodePushService = {
 
       this.reportStatus(`Applied OTA update v${newVersion} → JS Engine Reloaded`, newVersion);
 
-      // 5. Instantly restart React Native JS runtime engine
-      RNRestart.Restart();
+      Alert.alert(
+        '🎉 Hotfix Installed!',
+        `Version v${newVersion} has been installed successfully. Reloading app now!`,
+        [
+          {
+            text: 'OK',
+            onPress: () => RNRestart.Restart(),
+          },
+        ]
+      );
     } else {
       console.warn(`[CodePush] Download failed with status code: ${downloadResult.statusCode}`);
+      Alert.alert(
+        '❌ Download Failed',
+        `Server returned status code: ${downloadResult.statusCode}. Please check release URL.`,
+        [{ text: 'OK' }]
+      );
     }
   },
 

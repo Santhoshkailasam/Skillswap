@@ -58,18 +58,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🚀 Publish OTA Release Metadata to CodePush Server
+      - name: 🚀 Publish OTA Release Metadata & Bundle to CodePush Server
         env:
           SERVER_URL: ${{ secrets.CODEPUSH_SERVER_URL }}
-          DOWNLOAD_URL: https://github.com/${{ github.repository }}/releases/download/v${{ steps.vars.outputs.version }}/bundle-update.zip
+          API_KEY: ${{ secrets.CODEPUSH_API_KEY }}
+          VERSION: ${{ steps.vars.outputs.version }}
+          COMMIT_MSG: ${{ steps.vars.outputs.commit_msg }}
         run: |
+          node -e '
+            const fs = require("fs");
+            const zipBuffer = fs.readFileSync("bundle-update.zip");
+            const base64Str = zipBuffer.toString("base64");
+            const payload = {
+              platform: "android",
+              version: process.env.VERSION,
+              bundleBase64: base64Str,
+              mandatory: true,
+              releaseNotes: "Auto-released via Git Push: " + (process.env.COMMIT_MSG || "New hotfix release")
+            };
+            fs.writeFileSync("payload.json", JSON.stringify(payload));
+            console.log("Generated payload.json with base64 bundle (size: " + base64Str.length + " bytes)");
+          '
           curl -X POST "${SERVER_URL}/.netlify/functions/publish-release" \
             -H "Content-Type: application/json" \
-            -H "x-codepush-api-key: ${{ secrets.CODEPUSH_API_KEY }}" \
-            -d '{
-              "platform": "android",
-              "version": "${{ steps.vars.outputs.version }}",
-              "downloadUrl": "'"${DOWNLOAD_URL}"'",
-              "mandatory": true,
-              "releaseNotes": "Auto-released via Git Push: ${{ steps.vars.outputs.commit_msg }}"
-            }'
+            -H "x-codepush-api-key: ${API_KEY}" \
+            -d @payload.json
