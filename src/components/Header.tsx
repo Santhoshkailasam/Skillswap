@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, poi
           </View>
           <View style={styles.userTextContainer}>
             <Text style={styles.greetingText}>Welcome back 👋</Text>
-            <Text style={styles.userName}>Alex Rivera</Text>
+            <Text style={styles.userName}>Santhosh</Text>
           </View>
         </View>
 
