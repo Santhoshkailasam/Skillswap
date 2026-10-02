@@ -147,4 +147,31 @@ export const CodePushService = {
       return '1.0.0 (Base Build)';
     }
   },
+
+  /**
+   * Clears/deletes installed OTA hotfixes locally on device and resets back to base build 1.0.0
+   */
+  async clearInstalledHotfix(): Promise<void> {
+    try {
+      const extractPath = `${RNFS.DocumentDirectoryPath}/codepush_bundle`;
+      const exists = await RNFS.exists(extractPath);
+      if (exists) {
+        await RNFS.unlink(extractPath);
+      }
+      await AsyncStorage.removeItem(BUNDLE_VERSION_KEY);
+      this.reportStatus('Mobile app reset to Base Build (Cleared installed hotfix)', '1.0.0 (Base Build)');
+      Alert.alert(
+        '🗑️ Hotfix Cleared',
+        'Installed OTA hotfix bundle has been deleted. Mobile app is resetting back to base APK build 1.0.0!',
+        [
+          {
+            text: 'Restart App',
+            onPress: () => RNRestart.Restart(),
+          },
+        ]
+      );
+    } catch (err: any) {
+      Alert.alert('Error', `Failed to delete hotfix bundle: ${err?.message || 'Unknown error'}`);
+    }
+  },
 };

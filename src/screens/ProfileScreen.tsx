@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { CodePushService } from '../services/CodePushService';
 
 export const ProfileScreen: React.FC = () => {
   return (
@@ -89,6 +90,9 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* CodePush Developer Control Panel */}
+        <CodePushControlCard />
+
         {/* Quick Settings */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Account & Settings ⚙️</Text>
@@ -106,6 +110,49 @@ export const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+    </View>
+  );
+};
+
+const CodePushControlCard = () => {
+  const [activeVersion, setActiveVersion] = React.useState<string>('Loading...');
+
+  React.useEffect(() => {
+    loadVersion();
+  }, []);
+
+  const loadVersion = async () => {
+    const v = await CodePushService.getActiveVersion();
+    setActiveVersion(v);
+  };
+
+  return (
+    <View style={[styles.sectionCard, { backgroundColor: '#0F172A', borderColor: '#334155' }]}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>⚡ CodePush Mobile Control</Text>
+        <Text style={{ fontSize: 11, color: '#A5B4FC', fontWeight: '700', backgroundColor: '#1E1B4B', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+          v{activeVersion}
+        </Text>
+      </View>
+      <Text style={{ fontSize: 12, color: '#94A3B8', marginBottom: 14 }}>
+        Manage Over-The-Air hotfix updates directly on your device.
+      </Text>
+
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <TouchableOpacity
+          onPress={() => CodePushService.checkForUpdates()}
+          style={{ flex: 1, backgroundColor: '#4F46E5', paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}
+        >
+          <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>⚡ Check Update</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => CodePushService.clearInstalledHotfix()}
+          style={{ flex: 1, backgroundColor: '#DC2626', paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}
+        >
+          <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>🗑️ Delete Hotfix</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
