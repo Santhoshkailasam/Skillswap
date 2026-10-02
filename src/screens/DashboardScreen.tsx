@@ -84,7 +84,7 @@ export const DashboardScreen: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Top Header */}
         <View style={styles.codePushBanner}>
-          <Text style={styles.codePushBannerText}>⚡ CodePush Live Hotfix v1.0.2 - Real-Time OTA Update Active! 🎉</Text>
+          <Text style={styles.codePushBannerText}>⚡ CodePush Live Hotfix v1.0.2 - Real-Time OTA Update da</Text>
         </View>
 
         <Header
