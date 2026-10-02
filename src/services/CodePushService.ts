@@ -57,13 +57,15 @@ export const CodePushService = {
     const downloadDest = `${RNFS.CachesDirectoryPath}/bundle-update.zip`;
     const extractPath = `${RNFS.DocumentDirectoryPath}/codepush_bundle`;
 
-    // 1. Download JS bundle archive from CDN
+    console.log(`[CodePush] Downloading bundle from CDN: ${downloadUrl}`);
     const downloadResult = await RNFS.downloadFile({
       fromUrl: downloadUrl,
       toFile: downloadDest,
     }).promise;
 
-    if (downloadResult.statusCode === 200) {
+    console.log(`[CodePush] Download completed with status: ${downloadResult.statusCode}`);
+
+    if (downloadResult.statusCode >= 200 && downloadResult.statusCode < 400) {
       // 2. Extract archive to app documents directory
       await unzip(downloadDest, extractPath);
 
@@ -77,6 +79,8 @@ export const CodePushService = {
 
       // 5. Instantly restart React Native JS runtime engine
       RNRestart.Restart();
+    } else {
+      console.warn(`[CodePush] Download failed with status code: ${downloadResult.statusCode}`);
     }
   },
 };
