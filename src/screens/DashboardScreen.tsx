@@ -83,6 +83,10 @@ export const DashboardScreen: React.FC = () => {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Top Header */}
+        <View style={styles.codePushBanner}>
+          <Text style={styles.codePushBannerText}>⚡ CodePush Live Hotfix v1.0.1 Applied OTA!</Text>
+        </View>
+
         <Header
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -163,6 +167,21 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 24,
+  },
+  codePushBanner: {
+    backgroundColor: '#6366F1',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 20,
+    marginTop: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  codePushBannerText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   toastContainer: {
     position: 'absolute',

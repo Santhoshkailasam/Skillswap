@@ -87,7 +87,8 @@ android {
         versionName "1.0"
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_STL=c++_shared"
+                arguments "-DANDROID_STL=c++_shared", "-DCMAKE_CXX_STANDARD=17"
+                cppFlags "-std=c++17"
             }
         }
     }
@@ -109,6 +110,7 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            debuggable true
         }
     }
 }
