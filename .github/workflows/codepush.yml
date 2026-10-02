@@ -47,9 +47,19 @@ jobs:
           zip -r ../bundle-update.zip .
           cd ..
 
-      - name: 🚀 Publish OTA Release to CodePush Server
+      - name: 🏷️ Publish ZIP Package to GitHub Release CDN
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.vars.outputs.version }}
+          name: OTA Release v${{ steps.vars.outputs.version }}
+          files: bundle-update.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🚀 Publish OTA Release Metadata to CodePush Server
         env:
           SERVER_URL: ${{ secrets.CODEPUSH_SERVER_URL }}
+          DOWNLOAD_URL: https://github.com/${{ github.repository }}/releases/download/v${{ steps.vars.outputs.version }}/bundle-update.zip
         run: |
           curl -X POST "${SERVER_URL}/.netlify/functions/publish-release" \
             -H "Content-Type: application/json" \
@@ -57,7 +67,7 @@ jobs:
             -d '{
               "platform": "android",
               "version": "${{ steps.vars.outputs.version }}",
-              "downloadUrl": "'"${SERVER_URL}"'/bundles/android-${{ steps.vars.outputs.version }}.zip",
+              "downloadUrl": "'"${DOWNLOAD_URL}"'",
               "mandatory": true,
               "releaseNotes": "Auto-released via Git Push: ${{ steps.vars.outputs.commit_msg }}"
             }'

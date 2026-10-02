@@ -12,7 +12,7 @@ export const ProfileScreen: React.FC = () => {
             style={styles.avatar}
           />
           <View style={styles.profileText}>
-            <Text style={styles.name}>Alex Rivera</Text>
+            <Text style={styles.name}>Santhosh</Text>
             <Text style={styles.role}>React Native Developer</Text>
             <Text style={styles.location}>📍 San Francisco, CA</Text>
           </View>
