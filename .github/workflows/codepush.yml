@@ -1,0 +1,63 @@
+name: CodePush Auto-Release OTA Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install Project Dependencies
+        run: npm ci
+
+      - name: ⚙️ Generate Version Number & Commit Info
+        id: vars
+        run: |
+          VERSION="1.0.$(date +'%Y%m%d%H%M')"
+          COMMIT_MSG=$(git log -1 --pretty=%B | tr '\n' ' ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
+
+      - name: ⚡ Build React Native Android JS Bundle
+        run: |
+          mkdir -p build_output
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output build_output/index.android.bundle \
+            --assets-dest build_output/assets
+
+      - name: 📦 Create ZIP Archive Package
+        run: |
+          cd build_output
+          zip -r ../bundle-update.zip .
+          cd ..
+
+      - name: 🚀 Publish OTA Release to CodePush Server
+        env:
+          SERVER_URL: ${{ secrets.CODEPUSH_SERVER_URL }}
+        run: |
+          curl -X POST "${SERVER_URL}/.netlify/functions/publish-release" \
+            -H "Content-Type: application/json" \
+            -H "x-codepush-api-key: ${{ secrets.CODEPUSH_API_KEY }}" \
+            -d '{
+              "platform": "android",
+              "version": "${{ steps.vars.outputs.version }}",
+              "downloadUrl": "'"${SERVER_URL}"'/bundles/android-${{ steps.vars.outputs.version }}.zip",
+              "mandatory": true,
+              "releaseNotes": "Auto-released via Git Push: ${{ steps.vars.outputs.commit_msg }}"
+            }'
