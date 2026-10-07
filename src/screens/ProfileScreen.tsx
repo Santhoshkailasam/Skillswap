@@ -116,38 +116,82 @@ export const ProfileScreen: React.FC = () => {
 
 const CodePushControlCard = () => {
   const [activeVersion, setActiveVersion] = React.useState<string>('Loading...');
+  const [apiKey, setApiKey] = React.useState<string>('Loading...');
+  const [statusText, setStatusText] = React.useState<string | null>(null);
+  const [isChecking, setIsChecking] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    loadVersion();
+    loadInfo();
   }, []);
 
-  const loadVersion = async () => {
+  const loadInfo = async () => {
     const v = await CodePushService.getActiveVersion();
+    const key = await CodePushService.getApiKey();
     setActiveVersion(v);
+    setApiKey(key);
+  };
+
+  const handleCheckUpdate = async () => {
+    setIsChecking(true);
+    setStatusText('Checking server in background...');
+    const result = await CodePushService.checkForUpdates({ autoRestart: true });
+    setIsChecking(false);
+    if (result.updateAvailable) {
+      setStatusText(`✨ Update v${result.latestVersion} applied!`);
+      loadInfo();
+    } else {
+      setStatusText('✅ App is up to date');
+      setTimeout(() => setStatusText(null), 3000);
+    }
+  };
+
+  const handleClearHotfix = async () => {
+    setStatusText('🗑️ Resetting to base build...');
+    await CodePushService.clearInstalledHotfix();
   };
 
   return (
     <View style={[styles.sectionCard, { backgroundColor: '#0F172A', borderColor: '#334155' }]}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>⚡ CodePush Mobile Control</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <Text style={[styles.sectionTitle, { color: '#FFFFFF' }]}>⚡ CodePush Control</Text>
         <Text style={{ fontSize: 11, color: '#A5B4FC', fontWeight: '700', backgroundColor: '#1E1B4B', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
           v{activeVersion}
         </Text>
       </View>
-      <Text style={{ fontSize: 12, color: '#94A3B8', marginBottom: 14 }}>
-        Manage Over-The-Air hotfix updates directly on your device.
+
+      {/* Scoped API Key Badge */}
+      <View style={{ backgroundColor: '#1E293B', padding: 8, borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: '#334155' }}>
+        <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>App Deployment Key</Text>
+        <Text style={{ color: '#38BDF8', fontSize: 11, fontFamily: 'monospace', marginTop: 2 }} numberOfLines={1}>
+          🔑 {apiKey}
+        </Text>
+      </View>
+
+      <Text style={{ fontSize: 12, color: '#94A3B8', marginBottom: 10 }}>
+        Silent Over-The-Air background updates are enabled.
       </Text>
+
+      {statusText && (
+        <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)', padding: 8, borderRadius: 8, marginBottom: 12 }}>
+          <Text style={{ color: '#38BDF8', fontSize: 11, fontWeight: '600', textAlign: 'center' }}>
+            {statusText}
+          </Text>
+        </View>
+      )}
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <TouchableOpacity
-          onPress={() => CodePushService.checkForUpdates()}
-          style={{ flex: 1, backgroundColor: '#4F46E5', paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}
+          onPress={handleCheckUpdate}
+          disabled={isChecking}
+          style={{ flex: 1, backgroundColor: isChecking ? '#3730A3' : '#4F46E5', paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>⚡ Check Update</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>
+            {isChecking ? '⏳ Checking...' : '⚡ Check Update'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => CodePushService.clearInstalledHotfix()}
+          onPress={handleClearHotfix}
           style={{ flex: 1, backgroundColor: '#DC2626', paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}
         >
           <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>🗑️ Delete Hotfix</Text>

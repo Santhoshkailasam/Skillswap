@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  StatusBar,
+  StyleSheet,
+  View,
+  Platform,
+  Animated,
+  Easing,
+} from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -15,19 +22,65 @@ function App() {
   useEffect(() => {
     // Automatically check for Over-The-Air hotfixes on app startup
     CodePushService.checkForUpdates();
+
+    if (Platform.OS === 'android') {
+      (StatusBar as any).setBackgroundColor?.('#EEF2FF', true);
+      StatusBar.setBarStyle('dark-content', true);
+    }
   }, []);
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <AppContent />
     </SafeAreaProvider>
   );
 }
 
+const TAB_ORDER: Record<TabType, number> = {
+  dashboard: 0,
+  explore: 1,
+  swaps: 2,
+  profile: 3,
+};
+
 function AppContent() {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+
+  // Animation values for smooth screen switching
+  const screenFade = useRef(new Animated.Value(1)).current;
+  const screenSlide = useRef(new Animated.Value(0)).current;
+
+  const handleTabChange = (newTab: TabType) => {
+    if (newTab === activeTab) return;
+
+    const fromIndex = TAB_ORDER[activeTab];
+    const toIndex = TAB_ORDER[newTab];
+    const slideOffset = toIndex > fromIndex ? 18 : -18;
+
+    // Reset entrance animation
+    screenFade.setValue(0.2);
+    screenSlide.setValue(slideOffset);
+
+    setActiveTab(newTab);
+
+    // Smooth screen cross-fade and directional slide
+    Animated.parallel([
+      Animated.timing(screenFade, {
+        toValue: 1,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.spring(screenSlide, {
+        toValue: 0,
+        friction: 7,
+        tension: 110,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -46,9 +99,19 @@ function AppContent() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.content}>{renderScreen()}</View>
-      <View style={{ paddingBottom: insets.bottom }}>
-        <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            opacity: screenFade,
+            transform: [{ translateX: screenSlide }],
+          },
+        ]}
+      >
+        {renderScreen()}
+      </Animated.View>
+      <View style={[styles.bottomContainer, { paddingBottom: insets.bottom }]}>
+        <BottomNavBar activeTab={activeTab} onTabChange={handleTabChange} />
       </View>
     </View>
   );
@@ -57,10 +120,13 @@ function AppContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#EEF2FF',
   },
   content: {
     flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  bottomContainer: {
     backgroundColor: '#F8FAFC',
   },
 });
